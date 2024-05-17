@@ -2,12 +2,14 @@ from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 
 from api_v1.dependencies import role_service
+from api_v1.jwt_auth.validations import get_current_admin_payload
 from schemas.role_schema import RequestRoleSchema
 
 
 role_router = APIRouter(
     prefix="/role",
     tags=["Roles"],
+    dependencies=[Depends(get_current_admin_payload)]
 )
 
 

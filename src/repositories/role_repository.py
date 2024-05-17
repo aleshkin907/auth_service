@@ -19,12 +19,12 @@ class RoleRepository(SQLAlchemyRepository, AbstractRoleRepository):
 
     async def get_by_name(self, name: str) -> int:
         async with async_session_maker() as session:
-            stmt = select(self.model).where(self.model.name == name).returing(self.model.id)
+            stmt = select(self.model.id).where(self.model.name == name)
             data = await session.execute(stmt)
             res = data.scalars().first()
             
             if not res:
                 raise DataNotFoundException
             
-            return res[0].to_read_model()
+            return res
     

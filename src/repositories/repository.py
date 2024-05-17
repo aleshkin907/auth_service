@@ -55,7 +55,7 @@ class SQLAlchemyRepository(AbstractRepository):
             
             return res
         
-    async def update(self, id: int, data: dict) -> RoleSchema:
+    async def update(self, id: int, data: dict) -> Any:
         async with async_session_maker() as session:
             stmt = update(self.model).where(self.model.id == id).values(**data).returning(self.model)
             res = await session.execute(stmt)

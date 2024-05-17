@@ -5,6 +5,6 @@ from exceptions.setup_exceptions import setup_exceptions
 app = FastAPI()
 
 for router in all_routers:
-    app.include_router(router)
+    app.include_router(router, prefix="/api/v1")
 
 setup_exceptions(app)
