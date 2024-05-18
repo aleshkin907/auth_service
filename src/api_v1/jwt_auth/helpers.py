@@ -1,4 +1,5 @@
 from datetime import timedelta
+import uuid
 
 from configs.config import settings
 from schemas.user_schema import JWTUserSchema
@@ -34,12 +35,14 @@ def create_access_token(user: JWTUserSchema) -> str:
 
 
 def create_refresh_token(user: JWTUserSchema) -> str:
+    jti = str(uuid.uuid4())
     jwt_payload = {
         "sub": user.id,
+        "jti": jti
     }
     token = create_jwt(
         token_type = REFRESH_TOKEN_TYPE,
         token_data=jwt_payload,
         expire_timedelta=timedelta(days=settings.jwt.refresh_token_expire_days)
     )
-    return token
+    return token, jti

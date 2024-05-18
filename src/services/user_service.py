@@ -53,10 +53,13 @@ class UserService:
 
         if not validate_password(data.password, user_db.hash_password) or user_db.is_active == False:
             raise InvalidUserDataException()
-        
+
         return JWTUserSchema(
             id=user_db.id,
             username=user_db.username,
             role=role.name
         )
     
+    async def refresh_user_token(self, data: LoginUserSchema) -> JWTUserSchema:
+        user_db = await self.user_repository.get_by_email(data.email)
+        role = await self.role_repository.get_one(user_db.role_id)

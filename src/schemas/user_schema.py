@@ -38,3 +38,7 @@ class TokenInfoSchema(BaseModel):
     refresh_token: str | None = None
     token_type: str = "Bearer"
     
+class IssuedJWTTokenSchema(BaseModel):
+    jti: str
+    user_id: int
+    
