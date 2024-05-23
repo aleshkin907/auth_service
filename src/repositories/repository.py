@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
+import re
 from typing import Any, List
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy import delete, insert, select, update
 
 from db.db import async_session_maker
-from exceptions.exceptions import DataNotFoundException
-from schemas.role_schema import RoleSchema
+from exceptions.exceptions import ConflictException, DataNotFoundException
 
 
 class AbstractRepository(ABC):
@@ -26,10 +27,16 @@ class AbstractRepository(ABC):
 class SQLAlchemyRepository(AbstractRepository):
     model = None
 
-    async def create(self, data: dict) -> int:
+    async def create(self, data: dict) -> Any:
         async with async_session_maker() as session:
-            stmt = insert(self.model).values(**data).returning(self.model.id)
-            res = await session.execute(stmt)
+            stmt = insert(self.model).values(**data).returning(self.model)
+            try:
+                res = await session.execute(stmt)
+            except IntegrityError as e:
+                pattern = r'\(([^)]+)\)'
+                field = re.findall(pattern, str(e.orig))
+                raise ConflictException(msg=field[0])
+            
             await session.commit()
             return res.scalar_one()
 

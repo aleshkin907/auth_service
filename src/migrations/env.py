@@ -7,7 +7,7 @@ from alembic import context
 
 from configs.config import settings
 from db.db import Base, POSTGRES_URL
-from models.role import Role
+# from models.role import Role
 from models.user import User
 from models.issued_jwt import IssuedJWTToken
 

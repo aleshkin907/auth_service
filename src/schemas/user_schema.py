@@ -1,4 +1,7 @@
+import uuid
 from datetime import datetime
+from typing import Literal
+
 from pydantic import BaseModel, EmailStr
 
 
@@ -13,7 +16,7 @@ class UserSchema(BaseModel):
     username: str
     email: EmailStr
     hash_password: bytes
-    role_id: int
+    role: str
     registration_date: datetime
     is_active: bool
 
@@ -39,6 +42,5 @@ class TokenInfoSchema(BaseModel):
     token_type: str = "Bearer"
     
 class IssuedJWTTokenSchema(BaseModel):
-    jti: str
+    id: uuid.UUID
     user_id: int
-    

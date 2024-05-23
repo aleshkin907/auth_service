@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from exceptions.exceptions import DataNotFoundException, ForbiddenException, InvalidTokenException, InvalidTokenTypeException, InvalidUserDataException, NotAuthenticatedException
+from exceptions.exceptions import ConflictException, DataNotFoundException, ForbiddenException, InvalidTokenException, InvalidTokenTypeException, InvalidUserDataException, NotAuthenticatedException
 
 
 def setup_exceptions(app: FastAPI):
@@ -55,5 +55,14 @@ def setup_exceptions(app: FastAPI):
             return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 content={"detail": f"Invalid user data."},
+            )
+    
+    @app.exception_handler(ConflictException)
+    async def conflict_exception_handler(
+            request: Request, exc: ConflictException
+        ):
+            return JSONResponse(
+                status_code=status.HTTP_409_CONFLICT,
+                content={"detail": "Data already exists.", "data": exc.msg},
             )
     

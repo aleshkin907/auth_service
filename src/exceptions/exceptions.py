@@ -22,3 +22,7 @@ class ForbiddenException(Exception):
 
 class InvalidUserDataException(Exception):
     pass
+
+class ConflictException(Exception):
+    def __init__(self, msg: str):
+        self.msg = msg

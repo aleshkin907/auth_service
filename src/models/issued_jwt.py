@@ -10,7 +10,7 @@ from schemas.user_schema import IssuedJWTTokenSchema
 class IssuedJWTToken(Base):
     __tablename__ = "tokens"
 
-    jti: Mapped[UUID] = mapped_column(primary_key=True)
+    id: Mapped[UUID] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
 
     def to_read_model(self):

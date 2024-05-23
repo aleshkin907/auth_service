@@ -1,18 +1,17 @@
 from api_v1.jwt_auth.helpers import create_access_token
 from exceptions.exceptions import InvalidUserDataException
-from repositories.role_repository import AbstractRoleRepository, RoleRepository
+from models.user import User
 from repositories.user_repository import AbstractUserRepository, UserRepository
 from schemas.email_schema import EmailSchema
-from schemas.user_schema import JWTUserSchema, LoginUserSchema, RegisterUserSchema
+from schemas.user_schema import JWTUserSchema, LoginUserSchema, RegisterUserSchema, UserSchema
 from services.email_service import EmailSender
 from utils.auth import hash_password, validate_password
 from utils.consts import USER_ROLE_NAME, VERIFICATION_PARAM
 
 
 class UserService:
-    def __init__(self, user_repository: AbstractUserRepository, role_repository: AbstractRoleRepository):
+    def __init__(self, user_repository: AbstractUserRepository):
         self.user_repository: UserRepository = user_repository()
-        self.role_repository: RoleRepository = role_repository()
 
     async def create(self, user: RegisterUserSchema) -> int:
         user_dict = user.model_dump()
@@ -20,25 +19,21 @@ class UserService:
         user_dict["hash_password"] = hashed_password
         del user_dict["password"]
 
-        role_id = await self.role_repository.get_by_name(USER_ROLE_NAME)
-        user_dict["role_id"] = role_id
-
-        user_id = await self.user_repository.create(user_dict)
-        user = await self.user_repository.get_one(user_id)
+        user_model: User = await self.user_repository.create(user_dict)
 
         jwt_payload_schema = JWTUserSchema(
-            id=user.id,
-            username=user.username,
-            role=USER_ROLE_NAME
+            id=user_model.id,
+            username=user_model.username,
+            role=user_model.role
         )
         token = create_access_token(jwt_payload_schema)
 
-        email_data = EmailSchema(email_type=VERIFICATION_PARAM, username=user.username, email=user.email, token=token)
+        email_data = EmailSchema(email_type=VERIFICATION_PARAM, username=user_model.username, email=user_model.email, token=token)
 
         email_sender = EmailSender(email_data)
         await email_sender.send_email()
 
-        return user_id
+        return user_model.id
     
     async def update_user(self, user_id: int, password: str | None, action: str) -> None:
         if action == VERIFICATION_PARAM:
@@ -48,18 +43,17 @@ class UserService:
             await self.user_repository.update(user_id, {"hash_password": new_password})
 
     async def authenticate_user(self, data: LoginUserSchema) -> JWTUserSchema:
-        user_db = await self.user_repository.get_by_email(data.email)
-        role = await self.role_repository.get_one(user_db.role_id)
+        user_model: User = await self.user_repository.get_by_email(data.email)
 
-        if not validate_password(data.password, user_db.hash_password) or user_db.is_active == False:
+        if not validate_password(data.password, user_model.hash_password) or user_model.is_active == False:
             raise InvalidUserDataException()
 
         return JWTUserSchema(
-            id=user_db.id,
-            username=user_db.username,
-            role=role.name
+            id=user_model.id,
+            username=user_model.username,
+            role=user_model.role
         )
     
-    async def refresh_user_token(self, data: LoginUserSchema) -> JWTUserSchema:
-        user_db = await self.user_repository.get_by_email(data.email)
-        role = await self.role_repository.get_one(user_db.role_id)
+    async def get_by_id(self, id: int) -> UserSchema:
+        user = await self.user_repository.get_one(id)
+        return user
